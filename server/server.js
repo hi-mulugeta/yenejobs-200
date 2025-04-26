@@ -22,9 +22,6 @@ app.get("/", (req, res) => {
   res.send("let there be light!");
 });
 
-app.get("/debug-sentry", function mainHandler(req, res) {
-  throw new Error("My first Sentry error!"); // This will be picked up by Sentry
-});
 app.post("/webhooks", clerkWebhooks);
 //Port
 const PORT = process.env.PORT || 5000;
