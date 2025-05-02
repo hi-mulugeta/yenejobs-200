@@ -22,7 +22,7 @@ await connectDB();
 await connectCloudinary();
 app.use(
   cors({
-    origin: "https://job-portal-czi.pages.dev/", // or "*" during development
+    origin: "https://job-portal-czi.pages.dev", // or "*" during development
     credentials: true,
   })
 );
