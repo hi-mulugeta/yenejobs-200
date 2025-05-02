@@ -23,7 +23,6 @@ await connectCloudinary();
 app.use(
   cors({
     origin: "https://job-portal-czi.pages.dev/", // or "*" during development
-    credentials: true, // if using cookies or authorization headers
   })
 );
 app.use(express.json());
