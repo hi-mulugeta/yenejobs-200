@@ -9,6 +9,14 @@ function Navbar() {
   const { user } = useUser();
   const navigate = useNavigate();
 
+  const { companyData } = useContext(AppContext);
+
+  useContext(() => {
+    if (companyData) {
+      setShowRecruiterLogin(false);
+    }
+  }, [companyData]);
+
   const { setShowRecruiterLogin } = useContext(AppContext);
 
   return (
@@ -46,10 +54,14 @@ function Navbar() {
         ) : (
           <div className="flex items-center gap-5 max-sm:gap-3 max-sm:text-xs">
             <button
-              onClick={(e) => setShowRecruiterLogin(true)}
+              onClick={
+                companyData
+                  ? (e) => navigate("/dashboard")
+                  : (e) => setShowRecruiterLogin(true)
+              }
               className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
             >
-              Recruiter Login
+              {companyData ? "Company dashboard" : "Recruiter Login"}
             </button>
             <button
               onClick={(e) => openSignIn()}
