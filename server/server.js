@@ -11,6 +11,7 @@ import jobRoutes from "./routes/jobRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { clerkMiddleware } from "@clerk/express";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import cors from "cors";
 
 //initialize express app
 const app = express();
@@ -20,7 +21,12 @@ const app = express();
 await connectDB();
 //middleware
 await connectCloudinary();
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://job-portal-czi.pages.dev/", // or "*" during development
+    credentials: true, // if using cookies or authorization headers
+  })
+);
 app.use(express.json());
 app.use(clerkMiddleware());
 
