@@ -69,11 +69,11 @@ export const getUserJobApplication = async (req, res) => {
     const userId = req.auth.userId;
 
     const applications = await JobApplication.find({ userId })
-      .popuplate("companyId", "name email image")
-      .popuplate("jobId", "title description location category level salary")
+      .populate("companyId", "name email image")
+      .populate("jobId", "title description location category level salary")
       .exec();
     if (!applications) {
-      res.json({
+      return res.json({
         success: false,
         message: "No Job application found for the current user",
       });

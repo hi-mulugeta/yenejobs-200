@@ -64,10 +64,31 @@ export const AppContextProvider = (props) => {
       toast.error(error.message);
     }
   };
+
+  // Function to fetch users applied application data
+
+  const fetchUserApplications = async () => {
+    try {
+      const token = await getToken();
+      const { data } = await axios.get(backendUrl + "/api/users/application", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success) {
+        setUserApplications(data.applications);
+        console.log(data.applications);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   //function to fetch company data
   useEffect(() => {
     if (user) {
       fetchUserData();
+      fetchUserApplications();
     }
   }, [user]);
   const fetchCompanyData = async () => {
@@ -120,6 +141,7 @@ export const AppContextProvider = (props) => {
     userApplications,
     setUserApplications,
     fetchUserData,
+    fetchUserApplications,
   };
   return (
     <AppContext.Provider value={value}>{props.children}</AppContext.Provider>

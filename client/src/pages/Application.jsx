@@ -1,6 +1,6 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
-import { assets, jobsApplied } from "../assets/assets";
+
 import moment from "moment";
 import Footer from "../components/Footer";
 import { AppContext } from "../context/AppContext";
@@ -16,8 +16,13 @@ const Application = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
 
-  const { backendUrl, userData, userApplications, fetchUserData } =
-    useContext(AppContext);
+  const {
+    backendUrl,
+    userData,
+    userApplications,
+    fetchUserApplications,
+    fetchUserData,
+  } = useContext(AppContext);
 
   // Extract filename from resume URL if available
   const getResumeFileName = () => {
@@ -60,11 +65,18 @@ const Application = () => {
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = jobsApplied.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(jobsApplied.length / itemsPerPage);
+  const currentItems = userApplications.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(userApplications.length / itemsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
+  useEffect(() => {
+    if (user) {
+      fetchUserApplications();
+    }
+  }, [user]);
   return (
     <>
       <Navbar />
@@ -265,8 +277,8 @@ const Application = () => {
                         <div className="flex-shrink-0 h-10 w-10">
                           <img
                             className="h-10 w-10 rounded-full"
-                            src={job.logo}
-                            alt={job.company}
+                            src={job.companyId.image}
+                            alt={job.companyId.name}
                           />
                         </div>
                         <div className="ml-4">
@@ -277,11 +289,13 @@ const Application = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{job.title}</div>
+                      <div className="text-sm text-gray-900">
+                        {job.jobId.title}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                       <div className="text-sm text-gray-500">
-                        {job.location}
+                        {job.jobId.location}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
@@ -308,7 +322,7 @@ const Application = () => {
             </table>
           </div>
 
-          {jobsApplied.length === 0 ? (
+          {userApplications.length === 0 ? (
             <div className="text-center py-12">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -335,8 +349,8 @@ const Application = () => {
             <div className="flex items-center justify-between mt-4 px-2">
               <div className="text-sm text-gray-500">
                 Showing {indexOfFirstItem + 1} to{" "}
-                {Math.min(indexOfLastItem, jobsApplied.length)} of{" "}
-                {jobsApplied.length} applications
+                {Math.min(indexOfLastItem, userApplications.length)} of{" "}
+                {userApplications.length} applications
               </div>
               <div className="flex space-x-1">
                 <button
