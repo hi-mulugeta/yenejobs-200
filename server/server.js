@@ -11,7 +11,6 @@ import jobRoutes from "./routes/jobRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import { clerkMiddleware } from "@clerk/express";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
-import cors from "cors";
 
 //initialize express app
 const app = express();
