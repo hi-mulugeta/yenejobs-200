@@ -22,8 +22,23 @@ function Navbar() {
   return (
     <div className="sticky top-0 z-50 bg-white shadow-sm py-3 border-b border-gray-100 backdrop-blur-sm bg-opacity-90">
       <div className="container px-4 2xl:px-20 mx-auto flex justify-between items-center">
-        <img
+        {/* <img
           onClick={() => navigate("/")}
+          className="max-sm:w-32 cursor-pointer h-9 transition-transform hover:scale-105"
+          src={assets.logo}
+          alt="mjobs logo"
+        /> */}
+        <img
+          onClick={() => {
+            navigate("/"); // Your existing navigation
+            setTimeout(() => {
+              // Wait for navigation to complete
+              const heroElement = document.getElementById("hero");
+              if (heroElement) {
+                heroElement.scrollIntoView({ behavior: "smooth" });
+              }
+            }, 0);
+          }}
           className="max-sm:w-32 cursor-pointer h-9 transition-transform hover:scale-105"
           src={assets.logo}
           alt="mjobs logo"

@@ -17,6 +17,7 @@ const ApplyJob = () => {
   const { id } = useParams();
   const [JobData, setJobData] = useState(null);
   const [isAlreadyApplied, setIsAlreadyApplied] = useState(false);
+
   const {
     jobs,
     backendUrl,
@@ -80,6 +81,8 @@ const ApplyJob = () => {
 
       if (data.success) {
         setJobData(data.job);
+        // const deadlineDays = JobData.deadline ?? 7; // default to 7 if undefined or null
+        // const deadlineDate = moment(JobData.date).add(deadlineDays, "days");
       } else {
         toast.error(data.message);
       }
@@ -151,8 +154,17 @@ const ApplyJob = () => {
                 >
                   {isAlreadyApplied ? "Already Applied" : "Apply Now"}
                 </button>
-                <p className="text-sm text-gray-500">
+                {/* <p className="text-sm text-gray-500">
                   Posted {moment(JobData.date).fromNow()}
+                </p> */}
+
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium text-red-600">Deadline:</span>{" "}
+                  <span className="italic">
+                    {moment().to(
+                      moment(JobData.date).add(JobData.deadline ?? 7, "days")
+                    )}
+                  </span>
                 </p>
               </div>
             </div>
@@ -178,11 +190,26 @@ const ApplyJob = () => {
                   <h3 className="font-semibold text-lg text-gray-800 mb-4">
                     Ready to apply?
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  {/* <p className="text-gray-600 mb-4">
                     This position is open until{" "}
-                    {moment(JobData.deadline).format("MMMM Do, YYYY")}. We're
-                    looking forward to receiving your application!
+                    <span className="font-medium text-red-600">Deadline:</span>{" "}
+                    <span className="italic">
+                      {moment().to(
+                        moment(JobData.date).add(JobData.deadline ?? 7, "days")
+                      )}
+                    </span>
+                    . We're looking forward to receiving your application!
+                  </p> */}
+                  <p className="text-gray-600 mb-4">
+                    This position remains open until{" "}
+                    <span className="font-medium text-red-600">
+                      {moment().to(
+                        moment(JobData.date).add(JobData.deadline ?? 7, "days")
+                      )}
+                    </span>
+                    . We look forward to receiving your application!
                   </p>
+
                   <button
                     onClick={applyHandler}
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"

@@ -7,20 +7,21 @@ import Footer from "../components/Footer";
 import VisitorAnalyticsDashboard from "../components/VisitorAnalyticsDashboard";
 import SectionDividers from "../components/SectionDividers";
 import Divider from "../components/Divider";
+import Partner from "../components/Partner";
 
 const Home = () => {
   return (
-    <div>
+    <div id="hero">
       <Navbar />
-
       <Hero />
-
       <JobListing />
       <Divider />
-      <AppDownload />
+      <Partner />
       <Divider />
+
       <VisitorAnalyticsDashboard />
       <Divider />
+
       <Footer />
     </div>
   );

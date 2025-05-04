@@ -1,15 +1,26 @@
 import React from "react";
 import { assets } from "../assets/assets";
+import { useNavigate } from "react-router-dom";
 
 const Footer = () => {
+  const navigate = useNavigate();
   return (
     <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200">
       <div className="container px-4 2xl:px-20 mx-auto flex items-center justify-between gap-4 py-6">
         <img
-          width={160}
+          onClick={() => {
+            navigate("/"); // Your existing navigation
+            setTimeout(() => {
+              // Wait for navigation to complete
+              const heroElement = document.getElementById("hero");
+              if (heroElement) {
+                heroElement.scrollIntoView({ behavior: "smooth" });
+              }
+            }, 0);
+          }}
+          className="max-sm:w-32 cursor-pointer h-9 transition-transform hover:scale-105"
           src={assets.logo}
-          alt="Company Logo"
-          className="transition-opacity hover:opacity-80"
+          alt="mjobs logo"
         />
         <p className="flex-1 border-l border-gray-300 pl-4 text-sm text-gray-600 max-sm:hidden font-medium">
           Copyright © {new Date().getFullYear()} mjobs.com | All rights reserved

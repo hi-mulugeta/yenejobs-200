@@ -10,6 +10,7 @@ const jobSchema = mongoose.Schema({
   salary: { type: Number, required: true },
   date: { type: Number, required: true },
   visible: { type: Boolean, default: true },
+  deadline: { type: Number, default: 7 },
   companyId: { type: mongoose.Schema.ObjectId, ref: "Company", required: true },
 });
 

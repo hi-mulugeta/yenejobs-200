@@ -140,7 +140,7 @@ const SubscriptionCard = ({ onSuccess }) => {
             Notification Method
           </label>
           <div className="grid grid-cols-3 gap-3">
-            {["sms", "email", "both"].map((method) => (
+            {["sms", "call", "both"].map((method) => (
               <button
                 key={method}
                 type="button"
@@ -169,7 +169,7 @@ const SubscriptionCard = ({ onSuccess }) => {
                 onClick={() => setNotificationFrequency(frequency)}
                 className={`py-2 px-3 rounded-lg border transition ${
                   notificationFrequency === frequency
-                    ? "bg-blue-100 border-blue-500 text-blue-700"
+                    ? "bg-blue-100 border-blue-500 text-blue-700 "
                     : "border-gray-300 hover:bg-gray-50"
                 }`}
               >

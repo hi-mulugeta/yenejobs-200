@@ -11,6 +11,7 @@ const AddJob = () => {
   const [category, setCategory] = useState("Programming");
   const [level, setLevel] = useState("Beginner Level");
   const [salary, setSalary] = useState("");
+  const [deadline, setDeadline] = useState(7);
 
   const editorRef = useRef(null);
   const quillRef = useRef(null);
@@ -23,7 +24,7 @@ const AddJob = () => {
 
       const { data } = await axios.post(
         backendUrl + "/api/company/post-job",
-        { title, description, location, category, salary, level },
+        { title, description, location, category, salary, level, deadline },
         { headers: { token: companyToken } }
       );
 
@@ -132,26 +133,45 @@ const AddJob = () => {
             </div>
           </div>
 
-          <div className="w-full max-w-xs">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Salary (USD)
-            </label>
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 sm:text-sm">$</span>
+          <div className="flex items-center justify-start gap-3">
+            <div className="w-full max-w-xs">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Deadline(in days)
+              </label>
+              <div className="relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm"></span>
+                </div>
+                <input
+                  min={7}
+                  className="block w-full pl-7 pr-12 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  type="number"
+                  placeholder="7 days"
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
               </div>
-              <input
-                min={0}
-                className="block w-full pl-7 pr-12 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                type="number"
-                placeholder="0.00"
-                onChange={(e) => setSalary(e.target.value)}
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center">
-                <select className="h-full py-0 pl-2 pr-7 border-transparent bg-transparent text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-r-lg">
-                  <option>Monthly</option>
-                  <option>Yearly</option>
-                </select>
+            </div>
+            <div className="w-full max-w-xs">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Salary (USD)
+              </label>
+              <div className="relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm ">Br </span>
+                </div>
+                <input
+                  min={0}
+                  className="block w-full pl-7 pr-12 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  type="number"
+                  placeholder="0.00"
+                  onChange={(e) => setSalary(e.target.value)}
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center">
+                  <select className="h-full py-0 pl-2 pr-7 border-transparent bg-transparent text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-r-lg">
+                    <option>Monthly</option>
+                    <option>Yearly</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
