@@ -1,56 +1,113 @@
 import Subscription from "../models/Subscription.js";
 import axios from "axios";
 
+// Updated controller: subscribe to job alerts by category
+
 export const subscribeToJobAlerts = async (req, res) => {
-  const { jobId, phone, notificationMethod, notificationFrequency } = req.body;
+  const { categories, phone, notificationMethod, notificationFrequency } =
+    req.body;
   const userId = req.auth.userId;
 
   try {
-    // Existing subscription check
-    const existing = await Subscription.findOne({ userId, jobId });
-    if (existing) {
+    // Sanity check: categories must be a non-empty array of strings
+    if (!Array.isArray(categories) || categories.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Already subscribed to this category",
+        message: "Categories must be a non-empty array.",
       });
     }
 
-    // Generate verification code
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
+    // Normalize categories
+    const normalizedCategories = [
+      ...new Set(categories.map((c) => c.trim().toLowerCase())),
+    ];
+
+    // Check if a subscription already exists for this user and phone
+    let subscription = await Subscription.findOne({ userId, phone });
+
+    let verificationCode = null;
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Create subscription
-    const subscription = await Subscription.create({
-      userId,
-      jobId,
-      phone,
-      verificationCode,
-      verificationExpires: expiresAt,
-      notificationMethod,
-      notificationFrequency,
-      verified: false,
-      smsStatus: "pending", // Track SMS delivery status
-      smsMessageId: null,
-    });
+    if (subscription) {
+      // Add new categories
+      const newCategories = normalizedCategories.filter(
+        (cat) => !subscription.categories.includes(cat)
+      );
 
-    if (notificationMethod === "sms") {
+      if (newCategories.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Already subscribed to these categories.",
+        });
+      }
+
+      subscription.categories.push(...newCategories);
+
+      // Generate a new code if phone is not verified
+      if (!subscription.isPhoneVerified) {
+        verificationCode = Math.floor(
+          100000 + Math.random() * 900000
+        ).toString();
+        subscription.verificationCode = verificationCode;
+        subscription.verificationExpires = expiresAt;
+      }
+    } else {
+      // Create a new subscription with verification code
+      verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+      subscription = new Subscription({
+        userId,
+        phone,
+        categories: normalizedCategories,
+        verificationCode,
+        verificationExpires: expiresAt,
+        notificationMethod,
+        notificationFrequency,
+        isPhoneVerified: false,
+        smsStatus: "pending",
+        smsMessageId: null,
+      });
+    }
+
+    // Format phone number for Afromessage
+    // Normalize and format phone number
+    let formattedPhone = phone.replace(/\D/g, ""); // Remove all non-digits
+
+    if (
+      formattedPhone.startsWith("0") &&
+      formattedPhone.length === 10 &&
+      /^09[0-9]{8}$/.test(formattedPhone)
+    ) {
+      formattedPhone = "+251" + formattedPhone.substring(1);
+    } else if (
+      formattedPhone.length === 9 &&
+      /^9[0-9]{8}$/.test(formattedPhone)
+    ) {
+      formattedPhone = "+251" + formattedPhone;
+    } else if (
+      formattedPhone.startsWith("2519") &&
+      formattedPhone.length === 12
+    ) {
+      formattedPhone = "+" + formattedPhone;
+    } else if (
+      formattedPhone.startsWith("+2519") &&
+      formattedPhone.length === 13
+    ) {
+      formattedPhone = formattedPhone;
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Ethiopian mobile number format.",
+      });
+    }
+    // Send SMS verification only if needed
+    if (notificationMethod === "sms" && !subscription.isPhoneVerified) {
       try {
-        // Format phone number
-        let formattedPhone = phone.replace(/\D/g, "");
-        if (formattedPhone.startsWith("0")) {
-          formattedPhone = `+251${formattedPhone.substring(1)}`;
-        } else if (!formattedPhone.startsWith("+")) {
-          formattedPhone = `+${formattedPhone}`;
-        }
-
-        // Afromessage API request
         const response = await axios.post(
           "https://api.afromessage.com/api/send",
           {
             to: formattedPhone,
-            message: `Your verification code is: ${verificationCode}\nExpires in 24 hours.`,
+            message: `Your verification code is: ${subscription.verificationCode}\nExpires in 24 hours.`,
             sender_id: process.env.AFROMESSAGE_SENDER_ID || "INFO",
           },
           {
@@ -61,20 +118,15 @@ export const subscribeToJobAlerts = async (req, res) => {
           }
         );
 
-        console.log("Afromessage Response:", response.data);
-
-        // Handle Afromessage's asynchronous response
         if (response.data.acknowledge === "success") {
-          // Update subscription with message ID
           subscription.smsStatus = response.data.response.status.toLowerCase();
           subscription.smsMessageId = response.data.response.message_id;
           await subscription.save();
 
-          // Consider the message as successfully queued
           return res.status(201).json({
             success: true,
             message:
-              "Verification code is being sent. Please check your phone shortly.",
+              "Verification code is being sent. Please check your phone.",
             subscriptionId: subscription._id,
             verificationRequired: true,
           });
@@ -84,12 +136,7 @@ export const subscribeToJobAlerts = async (req, res) => {
           response.data.response?.message || "Unknown error from Afromessage"
         );
       } catch (smsError) {
-        console.error("Afromessage Error:", {
-          message: smsError.message,
-          response: smsError.response?.data,
-        });
-
-        // Update subscription with failure status
+        console.error("Afromessage Error:", smsError);
         subscription.smsStatus = "failed";
         await subscription.save();
 
@@ -104,6 +151,7 @@ export const subscribeToJobAlerts = async (req, res) => {
       }
     }
 
+    await subscription.save();
     return res.status(201).json({
       success: true,
       message: "Subscribed successfully. Please verify your phone.",
@@ -119,6 +167,8 @@ export const subscribeToJobAlerts = async (req, res) => {
     });
   }
 };
+
+// Verification logic (unchanged except minor refactor)
 export const verifyPhoneCode = async (req, res) => {
   const { code } = req.body;
   const userId = req.auth.userId;
@@ -137,6 +187,7 @@ export const verifyPhoneCode = async (req, res) => {
     }
 
     subscription.isPhoneVerified = true;
+    subscription.isActive = true;
     subscription.verificationCode = null;
     await subscription.save();
 

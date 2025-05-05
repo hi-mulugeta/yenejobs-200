@@ -5,6 +5,9 @@ import generateToken from "../utils/generateToken.js";
 import Job from "../models/Job.js";
 import JobApplication from "../models/jobApplication.js";
 import { application } from "express";
+import Subscription from "../models/Subscription.js";
+
+import axios from "axios";
 
 //register a new company
 export const registerCompany = async (req, res) => {
@@ -93,13 +96,45 @@ export const getCompanyData = async (req, res) => {
 
 // pots a new job
 
+// export const postJob = async (req, res) => {
+//   const { title, description, location, category, salary, level, deadline } =
+//     req.body;
+
+//   const companyId = req.company._id;
+//   try {
+//     const newJob = await Job({
+//       title,
+//       description,
+//       location,
+//       category,
+//       salary,
+//       level,
+//       companyId,
+//       date: Date.now(),
+//       deadline,
+//     });
+
+//     await newJob.save();
+//     // send message to the subscribers
+//     // from the Subscription model
+
+//     res.json({
+//       success: true,
+//       newJob,
+//     });
+//   } catch (error) {
+//     res.json({ success: false, message: error.message });
+//   }
+// };
+
 export const postJob = async (req, res) => {
   const { title, description, location, category, salary, level, deadline } =
     req.body;
-
   const companyId = req.company._id;
+
   try {
-    const newJob = await Job({
+    // 1. Save the new job
+    const newJob = new Job({
       title,
       description,
       location,
@@ -112,12 +147,82 @@ export const postJob = async (req, res) => {
     });
 
     await newJob.save();
+
+    // Calculate the deadline date by adding the number of days to the current date
+    const deadlineDate = new Date();
+    deadlineDate.setDate(deadlineDate.getDate() + deadline); // Adds "deadline" days to the current date
+    const formattedDeadline = deadlineDate.toLocaleDateString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+    const normalizedCategory = category.toLowerCase();
+    // 2. Find all active, verified subscribers interested in this category
+    const matchingSubscriptions = await Subscription.find({
+      notificationMethod: "sms",
+      isActive: true,
+      isPhoneVerified: true,
+      categories: { $in: [normalizedCategory] },
+    });
+
+    let successfulSMS = 0;
+    let failedSMS = 0;
+
+    // 3. Send Afromessage SMS to each subscriber
+    for (const subscriber of matchingSubscriptions) {
+      let formattedPhone = subscriber.phone.replace(/\D/g, "");
+      if (formattedPhone.startsWith("0")) {
+        formattedPhone = `+251${formattedPhone.slice(1)}`;
+      } else if (!formattedPhone.startsWith("+")) {
+        formattedPhone = `+${formattedPhone}`;
+      }
+
+      const message = `New Job Alert 📢\n${title} - ${location}\nCategory: ${category}\nApply before: ${formattedDeadline}.`;
+
+      try {
+        const response = await axios.post(
+          "https://api.afromessage.com/api/send",
+          {
+            to: formattedPhone,
+            message,
+            sender_id: process.env.AFROMESSAGE_SENDER_ID || "INFO",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.AFROMESSAGE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.data.acknowledge === "success") {
+          subscriber.lastNotifiedAt = new Date();
+          subscriber.smsStatus =
+            response.data.response.status?.toLowerCase() || "sent";
+          subscriber.smsMessageId = response.data.response.message_id || null;
+          await subscriber.save();
+          successfulSMS++;
+        } else {
+          console.error("Afromessage Rejected:", response.data);
+          failedSMS++;
+        }
+      } catch (smsError) {
+        console.error("Afromessage Error:", smsError.message);
+        subscriber.smsStatus = "failed";
+        await subscriber.save();
+        failedSMS++;
+      }
+    }
+
     res.json({
       success: true,
       newJob,
+      message: `${successfulSMS} SMS sent successfully, ${failedSMS} failed.`,
     });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    console.error("Job posting failed:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
